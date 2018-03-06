@@ -1,0 +1,73 @@
+// ==UserScript==
+// @name         cyberoam-autologin
+// @namespace    http://tampermonkey.net/
+// @version      1.0
+// @description  Too Lazy?
+// @author       You
+// @match        http://175.16.89.16:8888/                    <------Edit Here
+// @grant        none
+// @require      https://code.jquery.com/jquery-3.2.1.slim.min.js
+// ==/UserScript==
+
+(function() {
+    'use strict';
+    var pass = "123";      //<-----Password Here.
+     var IDS = ["151156","156464","141495","121215","151436","171451"];                 //<-----ID Here.
+
+
+    //Do Not Change Below.
+
+    var loc = -1;
+    var usernameInput = $('input[name=username]');
+    var passwordInput = $('input[name=password]');
+    var loginButton = $('input[name=btnSubmit]');
+    var endmessage = "Changed: \n";
+    var interval;
+    var check=1;
+    function doWork(uname,upass){
+        usernameInput.val(uname);
+        passwordInput.val(upass);
+        loginButton.click();
+        var txt = "";
+        window.setTimeout(function(){
+            txt = $("#msgDiv").find("xmp").text();
+            if(txt == "The system could not log you on. Make sure your password is correct" || txt == "You have reached Maximum Login Limit." || txt == "Your data transfer has been exceeded, Please contact the administrator"|| txt=="Periodic time over"){    //Add other conditions
+                window.setTimeout(function(){
+                    check=1;
+                    getWorkDone(function(){});
+                },800);                
+            }
+            else if(txt == "You have successfully logged in"){
+               check=0;
+            }
+        },400);
+    }
+    function keepCheck(){
+       interval = window.setInterval(function(){
+           var message = $("#msgDiv").find("xmp").text();
+           if(message == "Your data transfer has been exceeded, Please contact the administrator" && check==0)
+               getWorkDone(function(){});
+           if(IDS[loc].length===0)
+               return -1;
+       },500);
+    }
+    function getWorkDone(callback) {
+        loc = loc + 1;
+        var u = IDS[loc];
+        if(IDS[loc].length!==0)
+            doWork(u,pass);
+        callback();
+    }
+    function main(){
+        getWorkDone(function(){});
+        window.setTimeout(function(){
+                 keepCheck();
+        },500);
+    }
+    main();
+    $('body').keypress(function(e){    //Stops function when you press space.
+      if(e.keyCode == 32){
+         clearInterval(interval);
+      }
+    });
+})();
